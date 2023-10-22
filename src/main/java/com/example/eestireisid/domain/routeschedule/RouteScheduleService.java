@@ -1,8 +1,9 @@
 package com.example.eestireisid.domain.routeschedule;
 
-import com.example.eestireisid.domain.routeschedule.RouteScheduleRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class RouteScheduleService {
@@ -13,5 +14,10 @@ public class RouteScheduleService {
 
     public void saveRouteSchedule(RouteSchedule routeSchedule) {
         routeScheduleRepository.save(routeSchedule);
+    }
+
+
+    public List<RouteSchedule> getAllRouteSchedulesBy(Integer routeId) {
+        return routeScheduleRepository.getRouteSchedulesBy(routeId);
     }
 }

@@ -1,13 +1,17 @@
 package com.example.eestireisid.business;
 
+import com.example.eestireisid.business.dto.RouteDto;
+import com.example.eestireisid.business.dto.ScheduleDto;
 import com.example.eestireisid.domain.ApiService;
 import com.example.eestireisid.domain.city.City;
 import com.example.eestireisid.domain.city.CityService;
 import com.example.eestireisid.domain.company.Company;
 import com.example.eestireisid.domain.company.CompanyService;
+import com.example.eestireisid.domain.route.RouteMapper;
 import com.example.eestireisid.domain.routeschedule.RouteSchedule;
 import com.example.eestireisid.domain.routeschedule.RouteScheduleService;
 import com.example.eestireisid.domain.schedule.Schedule;
+import com.example.eestireisid.domain.schedule.ScheduleMapper;
 import com.example.eestireisid.domain.schedule.ScheduleService;
 import com.example.eestireisid.domain.time.Time;
 import com.example.eestireisid.domain.time.TimeService;
@@ -24,11 +28,18 @@ import reactor.core.publisher.Mono;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class SearchService {
+
+    @Resource
+    private ScheduleMapper scheduleMapper;
+
+    @Resource
+    private RouteMapper routeMapper;
 
     @Resource
     private ApiService apiService;
@@ -57,12 +68,35 @@ public class SearchService {
     @Resource
     private RouteScheduleService routeScheduleService;
 
-    public void searchSchedules() {
+
+
+    public RouteDto searchSchedules(String fromCity, String toCity) {
+        handleApiCall();
+
+        Route route = routeService.findRouteBy(fromCity, toCity);
+        List<ScheduleDto> scheduleDtos = getScheduleDtos(route);
+
+        RouteDto routeDto = routeMapper.toRouteDto(route);
+        routeDto.setSchedules(scheduleDtos);
+
+        return routeDto;
+    }
+
+    private List<ScheduleDto> getScheduleDtos(Route route) {
+        List<RouteSchedule> routeSchedules = routeScheduleService.getAllRouteSchedulesBy(route.getId());
+        ArrayList<Schedule> schedules = new ArrayList<>();
+        for (RouteSchedule routeSchedule : routeSchedules) {
+            schedules.add(routeSchedule.getSchedule());
+        }
+        List<ScheduleDto> scheduleDtos = scheduleMapper.toScheduleDtos(schedules);
+        return scheduleDtos;
+    }
+
+    private void handleApiCall() {
         Mono<JsonNode> response = apiService.getTimetableFromApi();
         response.subscribe(result -> {
             handleApiResponse(result);
         });
-
     }
 
     private void handleApiResponse(JsonNode result) {
