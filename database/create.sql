@@ -48,7 +48,7 @@ CREATE TABLE schedule (
     start_time_id int  NOT NULL,
     end_time_id int  NOT NULL,
     company_id int  NOT NULL,
-    price int  NOT NULL,
+    price float(2)  NOT NULL,
     CONSTRAINT schedule_pk PRIMARY KEY (id)
 );
 
