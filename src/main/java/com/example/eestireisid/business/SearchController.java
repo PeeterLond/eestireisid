@@ -24,7 +24,7 @@ public class SearchController {
             "järgi sõidugraafikud. Kui valitud linnade vahel buss ei sõida , siis visatakse viga errorCode-iga 111")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK"),
-            @ApiResponse(responseCode = "403",
+            @ApiResponse(responseCode = "404",
                     description = "message: Sellist teekonda pole hetkel saadaval. errorCode: 111",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))})
     public RouteDto searchSchedules(@RequestParam String fromCity, @RequestParam String toCity) {
@@ -33,7 +33,13 @@ public class SearchController {
 
     @PostMapping("/booking")
     @Operation(summary = "Salvestab broneeringu sõidule",
-    description = "Salvestab broneeringu vastavalt inimese ees-ja perekonnanimele.")
+    description = "Kontrollib kõigepealt kas ajakava on kehtiv, kui ei ole, siis vistakase viga errorCode-iga 222. " +
+            "Kui on kehtiv , siis salvestab broneeringu vastavalt inimese ees-ja perekonnanimele.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "403",
+                    description = "message: Ajagraafik on uuenenud, tee uus otsing. errorCode: 222",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))})
     public void addBooking(@RequestBody BookingDto request) {
         searchService.addBooking(request);
     }

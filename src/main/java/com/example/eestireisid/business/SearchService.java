@@ -25,16 +25,23 @@ import com.example.eestireisid.domain.route.RouteService;
 import com.example.eestireisid.domain.timetable.Timetable;
 import com.example.eestireisid.domain.timetable.TimetableService;
 import com.example.eestireisid.domain.timetableroute.TimetableRouteService;
+import com.example.eestireisid.infrastructure.Error;
+import com.example.eestireisid.infrastructure.exception.BusinessException;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
+import static com.example.eestireisid.infrastructure.Error.TIMETABLE_UPDATE;
 
 @Service
 public class SearchService {
@@ -93,21 +100,13 @@ public class SearchService {
     }
 
     public void addBooking(BookingDto request) {
+        checkIfTimetableIsExpired(request);
+
         Booking booking = bookingMapper.toBooking(request);
         Schedule schedule = scheduleService.getScheduleBy(request.getScheduleId());
         booking.setSchedule(schedule);
         bookingService.saveBooking(booking);
 
-    }
-
-    private List<ScheduleDto> getScheduleDtos(Route route) {
-        List<RouteSchedule> routeSchedules = routeScheduleService.getAllRouteSchedulesBy(route.getId());
-        ArrayList<Schedule> schedules = new ArrayList<>();
-        for (RouteSchedule routeSchedule : routeSchedules) {
-            schedules.add(routeSchedule.getSchedule());
-        }
-        List<ScheduleDto> scheduleDtos = scheduleMapper.toScheduleDtos(schedules);
-        return scheduleDtos;
     }
 
     private void handleApiCall() {
@@ -125,6 +124,11 @@ public class SearchService {
         if (timetableOptional.isEmpty()) {
             handleDatabaseFill(result);
         }
+    }
+
+    private static Instant convertToInstant(JsonNode node) {
+        String date = node.get("date").asText();
+        return Timestamp.valueOf(date).toInstant();
     }
 
     private void handleDatabaseFill(JsonNode result) {
@@ -147,62 +151,17 @@ public class SearchService {
         }
     }
 
-    private void createRouteSchedule(Route newRoute, Schedule newSchedule) {
-        RouteSchedule routeSchedule = new RouteSchedule();
-        routeSchedule.setRoute(newRoute);
-        routeSchedule.setSchedule(newSchedule);
-        routeScheduleService.saveRouteSchedule(routeSchedule);
-    }
+    private Timetable createTimetable(JsonNode expiresNode) {
+        Timetable newTimetable = new Timetable();
 
-    private Schedule createSchedule(JsonNode schedule) {
-        Schedule newSchedule = new Schedule();
-        newSchedule.setPrice((float) schedule.get("price").asDouble());
+        Instant datetimeInstant = convertToInstant(expiresNode);
+        newTimetable.setExpireDate(datetimeInstant);
+        newTimetable.setTimezoneType(expiresNode.get("timezone_type").asInt());
+        newTimetable.setTimezone(expiresNode.get("timezone").asText());
 
-        String companyName = schedule.get("company").get("state").asText();
-        newSchedule.setCompany(getCompany(companyName));
+        timetableService.saveTimetable(newTimetable);
 
-        JsonNode startTime = schedule.get("start");
-        newSchedule.setStartTime(createTime(startTime));
-
-        JsonNode endTime = schedule.get("end");
-        newSchedule.setEndTime(createTime(endTime));
-
-        scheduleService.saveSchedule(newSchedule);
-        return newSchedule;
-    }
-
-    private Time createTime(JsonNode time) {
-        Time newTime = new Time();
-        newTime.setDateTime(convertToInstant(time));
-        newTime.setTimezoneType(time.get("timezone_type").asInt());
-        newTime.setTimezone(time.get("timezone").asText());
-        timeService.save(newTime);
-        return newTime;
-    }
-
-    private Company getCompany(String companyName) {
-        Optional<Company> companyBy = companyService.findCompanyBy(companyName);
-        Company company;
-        if (companyBy.isEmpty()) {
-            company = createCompany(companyName);
-        } else {
-            company = companyBy.get();
-        }
-        return company;
-    }
-
-    private Company createCompany(String companyName) {
-        Company newCompany = new Company();
-        newCompany.setName(companyName);
-        companyService.saveCompany(newCompany);
-        return newCompany;
-    }
-
-    private void createTimetableRoutes(Timetable timetable, Route newRoute) {
-        TimetableRoute timetableRoute = new TimetableRoute();
-        timetableRoute.setTimetable(timetable);
-        timetableRoute.setRoute(newRoute);
-        timetableRouteService.save(timetableRoute);
+        return newTimetable;
     }
 
     private Route createRoute(JsonNode route) {
@@ -238,21 +197,81 @@ public class SearchService {
         return newCity;
     }
 
-    private static Instant convertToInstant(JsonNode node) {
-        String date = node.get("date").asText();
-        return Timestamp.valueOf(date).toInstant();
+    private void createTimetableRoutes(Timetable timetable, Route newRoute) {
+        TimetableRoute timetableRoute = new TimetableRoute();
+        timetableRoute.setTimetable(timetable);
+        timetableRoute.setRoute(newRoute);
+        timetableRouteService.save(timetableRoute);
     }
 
-    private Timetable createTimetable(JsonNode expiresNode) {
-        Timetable newTimetable = new Timetable();
+    private Schedule createSchedule(JsonNode schedule) {
+        Schedule newSchedule = new Schedule();
+        newSchedule.setPrice((float) schedule.get("price").asDouble());
 
-        Instant datetimeInstant = convertToInstant(expiresNode);
-        newTimetable.setExpireDate(datetimeInstant);
-        newTimetable.setTimezoneType(expiresNode.get("timezone_type").asInt());
-        newTimetable.setTimezone(expiresNode.get("timezone").asText());
+        String companyName = schedule.get("company").get("state").asText();
+        newSchedule.setCompany(getCompany(companyName));
 
-        timetableService.saveTimetable(newTimetable);
+        JsonNode startTime = schedule.get("start");
+        newSchedule.setStartTime(createTime(startTime));
 
-        return newTimetable;
+        JsonNode endTime = schedule.get("end");
+        newSchedule.setEndTime(createTime(endTime));
+
+        scheduleService.saveSchedule(newSchedule);
+        return newSchedule;
+    }
+
+    private Company getCompany(String companyName) {
+        Optional<Company> companyBy = companyService.findCompanyBy(companyName);
+        Company company;
+        if (companyBy.isEmpty()) {
+            company = createCompany(companyName);
+        } else {
+            company = companyBy.get();
+        }
+        return company;
+    }
+
+    private Company createCompany(String companyName) {
+        Company newCompany = new Company();
+        newCompany.setName(companyName);
+        companyService.saveCompany(newCompany);
+        return newCompany;
+    }
+
+    private Time createTime(JsonNode time) {
+        Time newTime = new Time();
+        newTime.setDateTime(convertToInstant(time));
+        newTime.setTimezoneType(time.get("timezone_type").asInt());
+        newTime.setTimezone(time.get("timezone").asText());
+        timeService.save(newTime);
+        return newTime;
+    }
+
+    private List<ScheduleDto> getScheduleDtos(Route route) {
+        List<RouteSchedule> routeSchedules = routeScheduleService.getAllRouteSchedulesBy(route.getId());
+        ArrayList<Schedule> schedules = new ArrayList<>();
+        for (RouteSchedule routeSchedule : routeSchedules) {
+            schedules.add(routeSchedule.getSchedule());
+        }
+        List<ScheduleDto> scheduleDtos = scheduleMapper.toScheduleDtos(schedules);
+        return scheduleDtos;
+    }
+
+    private void createRouteSchedule(Route newRoute, Schedule newSchedule) {
+        RouteSchedule routeSchedule = new RouteSchedule();
+        routeSchedule.setRoute(newRoute);
+        routeSchedule.setSchedule(newSchedule);
+        routeScheduleService.saveRouteSchedule(routeSchedule);
+    }
+
+    private void checkIfTimetableIsExpired(BookingDto request) {
+        RouteSchedule routeSchedule = routeScheduleService.getRouteScheduleBy(request.getScheduleId());
+        TimetableRoute timetableRoute = timetableRouteService.getTimetableRouteBy(routeSchedule.getRoute().getId());
+        Instant expireDate = timetableRoute.getTimetable().getExpireDate();
+        int comparison = Date.from(Instant.now()).compareTo(Date.from(expireDate));
+        if (comparison > 0) {
+            throw new BusinessException(TIMETABLE_UPDATE.getMessage(), TIMETABLE_UPDATE.getErrorCode());
+        }
     }
 }

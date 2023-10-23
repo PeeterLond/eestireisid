@@ -27,6 +27,6 @@ public class ApiService {
                 .retrieve()
                 .bodyToMono(JsonNode.class);
 
-        // TODO: handle api responses
+
     }
 }

@@ -20,4 +20,8 @@ public class RouteScheduleService {
     public List<RouteSchedule> getAllRouteSchedulesBy(Integer routeId) {
         return routeScheduleRepository.getRouteSchedulesBy(routeId);
     }
+
+    public RouteSchedule getRouteScheduleBy(Integer scheduleId) {
+        return routeScheduleRepository.getRouteScheduleBy(scheduleId);
+    }
 }

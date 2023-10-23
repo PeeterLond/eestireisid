@@ -1,7 +1,5 @@
 package com.example.eestireisid.domain.timetableroute;
 
-import com.example.eestireisid.domain.timetableroute.TimetableRoute;
-import com.example.eestireisid.domain.timetableroute.TimetableRouteRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -14,5 +12,9 @@ public class TimetableRouteService {
 
     public void save(TimetableRoute timetableRoute) {
         timetableRouteRepository.save(timetableRoute);
+    }
+
+    public TimetableRoute getTimetableRouteBy(Integer routeId) {
+        return timetableRouteRepository.getTimetableRouteBy(routeId);
     }
 }

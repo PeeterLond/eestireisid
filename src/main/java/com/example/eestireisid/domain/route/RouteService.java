@@ -19,7 +19,7 @@ public class RouteService {
     }
 
     public Route findRouteBy(String fromCity, String toCity) {
-        Optional<Route> route = routeRepository.findRouteBy(fromCity, toCity);
+        Optional<Route> route = routeRepository.findActiveRouteBy(fromCity, toCity, "A");
 
         if (route.isEmpty()) {
             throw new DataNotFoundException(NO_ROUTE_FOUND.getMessage(), NO_ROUTE_FOUND.getErrorCode());
