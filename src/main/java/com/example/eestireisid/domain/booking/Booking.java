@@ -1,4 +1,4 @@
-package com.example.eestireisid.domain.entity;
+package com.example.eestireisid.domain.booking;
 
 import com.example.eestireisid.domain.schedule.Schedule;
 import jakarta.persistence.*;

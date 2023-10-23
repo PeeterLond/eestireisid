@@ -1,7 +1,5 @@
 package com.example.eestireisid.domain.schedule;
 
-import com.example.eestireisid.domain.schedule.Schedule;
-import com.example.eestireisid.domain.schedule.ScheduleRepository;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -14,5 +12,9 @@ public class ScheduleService {
 
     public void saveSchedule(Schedule newSchedule) {
         scheduleRepository.save(newSchedule);
+    }
+
+    public Schedule getScheduleBy(Integer scheduleId) {
+        return scheduleRepository.getReferenceById(scheduleId);
     }
 }

@@ -1,8 +1,12 @@
 package com.example.eestireisid.business;
 
+import com.example.eestireisid.business.dto.BookingDto;
 import com.example.eestireisid.business.dto.RouteDto;
 import com.example.eestireisid.business.dto.ScheduleDto;
 import com.example.eestireisid.domain.ApiService;
+import com.example.eestireisid.domain.booking.Booking;
+import com.example.eestireisid.domain.booking.BookingMapper;
+import com.example.eestireisid.domain.booking.BookingService;
 import com.example.eestireisid.domain.city.City;
 import com.example.eestireisid.domain.city.CityService;
 import com.example.eestireisid.domain.company.Company;
@@ -36,12 +40,6 @@ import java.util.Optional;
 public class SearchService {
 
     @Resource
-    private ScheduleMapper scheduleMapper;
-
-    @Resource
-    private RouteMapper routeMapper;
-
-    @Resource
     private ApiService apiService;
 
     @Resource
@@ -68,6 +66,18 @@ public class SearchService {
     @Resource
     private RouteScheduleService routeScheduleService;
 
+    @Resource
+    private BookingService bookingService;
+
+    @Resource
+    private ScheduleMapper scheduleMapper;
+
+    @Resource
+    private RouteMapper routeMapper;
+
+    @Resource
+    private BookingMapper bookingMapper;
+
 
 
     public RouteDto searchSchedules(String fromCity, String toCity) {
@@ -80,6 +90,14 @@ public class SearchService {
         routeDto.setSchedules(scheduleDtos);
 
         return routeDto;
+    }
+
+    public void addBooking(BookingDto request) {
+        Booking booking = bookingMapper.toBooking(request);
+        Schedule schedule = scheduleService.getScheduleBy(request.getScheduleId());
+        booking.setSchedule(schedule);
+        bookingService.saveBooking(booking);
+
     }
 
     private List<ScheduleDto> getScheduleDtos(Route route) {
@@ -197,6 +215,7 @@ public class SearchService {
         newRoute.setToCity(getCity(toCity));
 
         newRoute.setDistance(route.get("distance").asInt());
+        newRoute.setStatus("A");
         routeService.saveRoute(newRoute);
         return newRoute;
     }

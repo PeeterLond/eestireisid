@@ -1,5 +1,6 @@
 package com.example.eestireisid.business;
 
+import com.example.eestireisid.business.dto.BookingDto;
 import com.example.eestireisid.business.dto.RouteDto;
 import com.example.eestireisid.infrastructure.error.ApiError;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,9 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class SearchController {
@@ -31,6 +30,15 @@ public class SearchController {
     public RouteDto searchSchedules(@RequestParam String fromCity, @RequestParam String toCity) {
         return searchService.searchSchedules(fromCity, toCity);
     }
+
+    @PostMapping("/booking")
+    @Operation(summary = "Salvestab broneeringu sõidule",
+    description = "Salvestab broneeringu vastavalt inimese ees-ja perekonnanimele.")
+    public void addBooking(@RequestBody BookingDto request) {
+        searchService.addBooking(request);
+    }
+
+
 
 
 }

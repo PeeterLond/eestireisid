@@ -31,6 +31,7 @@ CREATE TABLE route (
     from_city_id int  NOT NULL,
     to_city_id int  NOT NULL,
     distance int  NOT NULL,
+    status char(1)  NOT NULL,
     CONSTRAINT route_pk PRIMARY KEY (id)
 );
 

@@ -30,4 +30,8 @@ public class Route {
     @Column(name = "distance", nullable = false)
     private Integer distance;
 
+    @NotNull
+    @Column(name = "status", nullable = false, length = Integer.MAX_VALUE)
+    private String status;
+
 }
