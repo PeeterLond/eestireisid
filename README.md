@@ -1,7 +1,7 @@
 # Eesti Reisid back-end server
 
 This is my project made for a work trial. It's a platform where you can search for bus schedules and
-make a booking to a trip.
+make a booking to a trip. WORK IN PROGRESS(This is about 2,5 days of work).
 
 ## How to run this server:
 1) Clone or download project to preferred location on your computer.
